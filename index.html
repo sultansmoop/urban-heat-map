@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urban Heat Map Simulation</title>
+  <style>
+    :root {
+      --bg-color: #f4f7f6;
+      --text-color: #333;
+      --card-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    header h1 { font-size: 1.6rem; margin-bottom: 6px; }
+    header p  { font-size: 0.9rem; color: #555; }
+
+    .simulation-container {
+      display: flex;
+      gap: 30px;
+      max-width: 920px;
+      width: 100%;
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+
+    /* Left panel */
+    .controls {
+      flex: 0 0 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .palette {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .palette-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #333;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+      text-align: left;
+    }
+    .palette-btn:hover  { border-color: #a0a0a0; }
+    .palette-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+
+    .color-preview {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+
+    .asphalt  { background-color: #475569; }
+    .concrete { background-color: #94a3b8; }
+    .grass    { background-color: #22c55e; }
+    .water    { background-color: #3b82f6; }
+    .snow     { background-color: #e2e8f0; }
+
+    /* Dashboard / metrics */
+    .dashboard {
+      background: #f8fafc;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .dashboard h3 { font-size: 0.8rem; color: #888; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .temp-display {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #dc2626;
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+
+    .sub-metrics {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .sub-metric .val { font-size: 0.95rem; font-weight: 600; color: #333; }
+    .sub-metric .lbl { font-size: 0.72rem; color: #888; margin-top: 2px; }
+
+    /* Quick actions */
+    .actions { display: flex; flex-direction: column; gap: 6px; }
+
+    .action-btn {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #374151;
+      text-align: left;
+      transition: background 0.15s;
+    }
+    .action-btn:hover { background: #f3f4f6; }
+
+    /* Right panel */
+    .grid-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 260px;
+    }
+
+    .size-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.875rem;
+      color: #555;
+      width: 100%;
+    }
+    .size-row input { flex: 1; }
+    .size-row span  { min-width: 32px; font-weight: 600; color: #333; }
+
+    /* Mode toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle-text {
+      font-size: 0.8rem;
+      color: #888;
+      font-weight: 500;
+    }
+    .toggle-text.on { color: #1e293b; font-weight: 600; }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider-track {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: #cbd5e1;
+      border-radius: 22px;
+      transition: background 0.2s;
+    }
+    .slider-track::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .switch input:checked + .slider-track { background: #2563eb; }
+    .switch input:checked + .slider-track::before { transform: translateX(18px); }
+
+    /* Canvas */
+    #grid-canvas {
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      cursor: crosshair;
+      display: block;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: #555;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Urban Heat Map Simulation</h1>
+    <p>Paint materials onto the grid — toggle between Normal view and Heat Map to see temperature patterns</p>
+  </header>
+
+  <main class="simulation-container">
+
+    <!-- Left panel -->
+    <section class="controls">
+
+      <div>
+        <div class="section-label">Material palette</div>
+        <div class="palette" id="palette">
+          <button class="palette-btn active" data-material="asphalt">
+            <span class="color-preview asphalt"></span>Asphalt
+          </button>
+          <button class="palette-btn" data-material="concrete">
+            <span class="color-preview concrete"></span>Concrete
+          </button>
+          <button class="palette-btn" data-material="grass">
+            <span class="color-preview grass"></span>Grass / park
+          </button>
+          <button class="palette-btn" data-material="water">
+            <span class="color-preview water"></span>Water body
+          </button>
+          <button class="palette-btn" data-material="snow">
+            <span class="color-preview snow"></span>Snow
+          </button>
+        </div>
+      </div>
+
+      <div class="dashboard">
+        <h3>City Metrics</h3>
+        <div style="font-size:0.75rem;color:#888;">Average surface temp</div>
+        <div class="temp-display" id="temp-readout">— °C</div>
+        <div class="sub-metrics">
+          <div class="sub-metric">
+            <div class="val" id="hot-temp">—</div>
+            <div class="lbl">Hottest °C</div>
+          </div>
+          <div class="sub-metric">
+            <div class="val" id="cool-temp">—</div>
+            <div class="lbl">Coolest °C</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="section-label">Quick actions</div>
+        <button class="action-btn" id="btn-clear">Reset to concrete</button>
+      </div>
+
+    </section>
+
+    <!-- Right panel -->
+    <section class="grid-container">
+
+      <div class="size-row">
+        <label for="grid-size">Grid size:</label>
+        <input type="range" id="grid-size" min="3" max="12" value="6" step="1">
+        <span id="size-out">6×6</span>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-text on" id="lbl-normal">Normal</span>
+        <label class="switch" aria-label="Toggle heat map mode">
+          <input type="checkbox" id="mode-toggle">
+          <span class="slider-track"></span>
+        </label>
+        <span class="toggle-text" id="lbl-heat">Heat map</span>
+      </div>
+
+      <canvas id="grid-canvas"></canvas>
+
+      <div id="legend-normal" class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#475569"></div>Asphalt</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#94a3b8"></div>Concrete</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#22c55e"></div>Grass</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#3b82f6"></div>Water</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#e2e8f0"></div>Snow</div>
+      </div>
+
+      <div id="legend-heat" class="legend" style="display:none;">
+        <div class="legend-item"><div class="legend-swatch" style="background:#3b82f6"></div>Coolest</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f59e0b"></div>Moderate</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#ef4444"></div>Hottest</div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- script.js must sit after the DOM so getElementById calls succeed -->
+  <script src="script.js"></script>
+
+</body>
+</html>
