@@ -25,7 +25,7 @@ This is a simplified form of the full Surface Energy Balance equation:
 Q* + Q_F = Q_H + Q_E + ΔQ_S
 Long-wave radiation and anthropogenic heat (Q_F) are omitted for clarity. The albedo and QE relationships are faithful to published environmental science literature.
 
-Tree Canopy Buffer Zone
+Tree Canopy Buffer Zone:
 Every grass or water cell shares a fraction of its evaporative cooling with each of its ≤8 neighbours:
 QE_buffer[neighbour] += QE_grass × BUFFER_FRAC (BUFFER_FRAC = 0.35)
 This models the measurable cooling halo that urban green space creates around it. one park tile cools eight surrounding cells.
