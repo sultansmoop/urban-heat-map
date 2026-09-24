@@ -3,6 +3,7 @@ Urban Heat Map Simulation
 An interactive simulation webpage that models how different materials affect local temperatures. Paint materials onto a grid and watch the heat map update in real time, powered by a real Surface Energy Balance equation. Open index.html in any browser to try it out.
 
 Features:
+
 Drag-paint grid: click or drag to paint any cell with a material; the simulation recalculates instantly
 Resizable grid: slider adjusts from 3×3 up to 12×12
 Normal / Heat Map toggle: switch between material colours and a blue -> yellow -> red temperature overlay
